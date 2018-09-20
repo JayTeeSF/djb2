@@ -8,6 +8,16 @@ I also saw reference to this in a talk about min-hashing (re: a fast hashing alg
 hash_alg = Djb2.new
 hash_alg.hash("some input")
 => 8246924729000332073
+
+# nice algorithm for identifying similar things:
+hash_alg.hash("aa")
+=> 5863207
+hash_alg.hash("ab")
+=> 5863208
+hash_alg.hash("ac")
+=> 5863209
+hash_alg.hash("ad")
+=> 5863210
 ```
 
 with respect to min-hashing perhaps you might do something like:
