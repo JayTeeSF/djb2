@@ -114,91 +114,6 @@ class SubsetPrinter
     end
   end
 
-  # slower than the iterative version (so far)
-  def recursive_set_walker(current_set_ary=@ary, latest_rotation=nil, set_size=current_set_ary.size, printed_subsets=nil, rotations_remaining=1 + set_size, subset_size=0, seen={}, &block)
-    if 0 == set_size
-      yield(EMPTY_SET) if yield?(EMPTY_SET, seen)
-      return
-    end
-
-    if latest_rotation
-      previous_rotation = latest_rotation
-      latest_rotation = rotate(previous_rotation.dup)
-
-      if (latest_rotation == current_set_ary) || 0 == rotations_remaining
-        #warn "over-rotated"
-        yield(current_set_ary) if yield?(current_set_ary, seen)
-        yield(EMPTY_SET) if yield?(EMPTY_SET, seen)
-        return
-      end
-      #candidate_subsets = printed_subsets.zip(latest_rotation)
-      candidate_subsets = []
-      printed_subsets.each { |ps| 
-        latest_rotation.each { |lr|
-          next if ps.include?(lr)
-          candidate_subsets << (ps.dup << lr)
-        }
-      }
-    else
-      previous_rotation = current_set_ary.dup
-      latest_rotation = previous_rotation
-      candidate_subsets = previous_rotation.map{ |s| [s] }
-    end
-
-    # warn "\n\t**printed_subsets: #{printed_subsets.inspect}, previous_rotation: #{previous_rotation.inspect}, candidate_subsets: #{candidate_subsets.inspect}**\n"
-    candidate_subsets.each { |ss|
-      got = ss.flatten;
-      block.call(got) if yield?(got, seen)
-    }
-
-    filtered_printed_subsets = seen.keys.select { |printed_subset| printed_subset.size > subset_size }
-    return recursive_set_walker(current_set_ary, latest_rotation, set_size, filtered_printed_subsets, rotations_remaining -= 1, subset_size += 1, seen, &block)
-  end
-
-  def iterative_set_walker(current_set_ary=@ary)
-    seen = {}
-    set_size = current_set_ary.size
-    if 0 == set_size
-      yield(EMPTY_SET) if yield?(EMPTY_SET, seen)
-      return
-    end
-
-    size = 1
-    current_set_ary.each do |element|
-      got = [element]
-      yield(got) if yield?(got, seen)
-    end
-    latest_rotation = current_set_ary.dup
-
-    size += 1
-    #num_rotations_needed = (Float(set_size) / 2).ceil + 1
-    num_rotations_needed = set_size
-    (1..num_rotations_needed).to_a.each do
-      previous_rotation = latest_rotation
-      latest_rotation = rotate(previous_rotation.dup)
-
-      if latest_rotation == current_set_ary
-        next
-      end
-
-      seen.keys.each do |printed_subset|
-        next if (printed_subset.size + 1) < size
-
-        latest_rotation.each do |nth_element|
-          if printed_subset.include?(nth_element)
-            next
-          end
-          got = printed_subset.dup # dup'ing is essential
-          got << nth_element
-          yield(got) if yield?(got, seen)
-        end
-      end
-      size += 1
-    end
-
-    yield(current_set_ary) if yield?(current_set_ary, seen)
-    yield(EMPTY_SET) if yield?(EMPTY_SET, seen)
-  end
 end
 
 if __FILE__ == $PROGRAM_NAME
@@ -208,17 +123,6 @@ if __FILE__ == $PROGRAM_NAME
   tN = Time.now.to_f
   tt_took = tN - t0
 
-  #warn "iterative:"
-  #t0 = Time.now.to_f
-  #SubsetPrinter.new(ARGV).run(:iterative)
-  #tN = Time.now.to_f
-  #iterative_took = tN - t0
-
-  #warn "recursive:"
-  #t0 = Time.now.to_f
-  #SubsetPrinter.new(ARGV).run(:recursive)
-  #tN = Time.now.to_f
-  #recursive_took = tN - t0
   #warn "video:"
   #t0 = Time.now.to_f
   #SubsetPrinter.new(ARGV).run(:video)
@@ -227,6 +131,4 @@ if __FILE__ == $PROGRAM_NAME
 
   warn "tt took #{tt_took}secs"
   #warn "video took #{video_took}secs"
-  #warn "iterative took #{iterative_took}secs"
-  #warn "recursive took #{recursive_took}secs"
 end
