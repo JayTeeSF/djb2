@@ -15,7 +15,7 @@ class PascalRow
     row = new(FIRST_PREVIOUS_ROW_ARY, options)
     (0..n_rows).each do |idx|
       row.print(idx, n_rows, max_padding)
-      row = row.next_row # we don't print the very last row ...which is one more than `n_rows`
+      row = row.next_row # we don't print the very last row ...which is actually `n_rows + 1`
     end
   end
 
@@ -26,7 +26,7 @@ class PascalRow
   end
 
   def next_row
-    return PascalRow.new(row_ary, idx: (idx ? idx + 1 : nil)) # avoid mutation, create a new one...
+    return PascalRow.new(row_ary, idx: (idx ? idx + 1 : nil)) # avoid mutating the current object, create a new one...
   end
 
   def print(idx=nil, max_id=nil, max_padding=nil)
@@ -56,6 +56,9 @@ class PascalRow
     return FIRST_ROW_ARY if FIRST_PREVIOUS_ROW_ARY == @previous_row_ary
 
     starting_ary = EVERY_SIDE_ROW_ARY + @previous_row_ary + EVERY_SIDE_ROW_ARY
+
+    # https://apidock.com/ruby/Enumerable/each_cons
+    # for each pair of elements in the previous row, sum them in order to generate the current row
     return starting_ary.each_cons(2).map {|a,b| a + b }
   end
 
@@ -64,12 +67,12 @@ class PascalRow
   end
 
   def self.print_row_ary(row_ary, idx=nil, max_id=nil, max_padding=nil)
-    ret_str = row_ary.inspect.to_s.sub('[',"0, ").sub(']', ", 0\n")
+    ret_str = row_ary_to_str(row_ary)
 
     if idx
       padding = padding_for_row_ary(row_ary, max_padding) # FYI: this method recalculates ret_str
       if max_id
-        if LEFT_LEANING # I really just need to make a grid, and align each value in each cell
+        if LEFT_LEANING # I really just need to make a grid, so I can align the value(s) within in each cell in each column...
           custom_padding = padding - (max_id - idx) # left side aligned
         else
           custom_padding = padding
@@ -94,15 +97,17 @@ class PascalRow
     return max_padding
   end
 
+  def self.row_ary_to_str(row_ary)
+    row_ary.inspect.to_s.sub('[',"0, ").sub(']', ", 0\n")
+  end
+
   def self.padding_for_row_ary(row_ary, cached_padding_value=nil)
-    row_ary_str = row_ary.inspect.to_s.sub('[',"0, ").sub(']', ", 0\n")
     len = 1
     if cached_padding_value
       len = cached_padding_value
     else
-      string_to_pad = ": #{row_ary_str}"
-      len = string_to_pad.length
-      # warn "str (of #{len} chars) to pad: #{string_to_pad}"
+      string_to_pad = ": #{row_ary_to_str(row_ary)}"
+      len = string_to_pad.length # warn "str (of #{len} chars) to pad: #{string_to_pad}"
     end
     return len
   end
@@ -155,7 +160,6 @@ if __FILE__ == $PROGRAM_NAME
   opt_parser.parse!
 
   #warn "options: #{options.inspect}"
-
   if options[:row_ary]
     row_ary = options.delete(:row_ary).map(&:to_i)
     row_ary = PascalRow::FIRST_ROW_ARY unless row_ary.size > 0
