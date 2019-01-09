@@ -94,30 +94,6 @@ class PascalRow
     return max_padding
   end
 
-  # unused:
-  def previous_row
-    # no rows prior to the first row:
-    return nil if [FIRST_PREVIOUS_ROW_ARY].include?(@previous_row_ary)
-
-    # This code is slow but sufficient since I'm never going to calculate a million rows: start at beginning (0) and search till we find the current row... then backup-one
-    # (alternatively we sum the cell-values in this row, then determine what power-of-2 that is, at which point we'll know row-number (aka: 'n') such that we can calculate: n-choose-k)
-    potential_row = PascalRow.new(FIRST_ROW_ARY, idx: 0) # avoid mutation, just create a new one...
-    while potential_row.row_ary == @previous_row_ary
-      potential_row = potential_row.next_row
-    end
-    potential_row
-  end
-
-  # unused:
-  def print_next(idx=nil)
-    next_row.print(idx)
-  end
-
-  # unused:
-  def print_previous(idx=nil, max_id=nil, max_padding=nil)
-    PascalRow.print_row_ary(@previous_row_ary, idx || (@idx ? @idx - 1 : nil), max_id, max_padding)
-  end
-
   def self.padding_for_row_ary(row_ary, cached_padding_value=nil)
     row_ary_str = row_ary.inspect.to_s.sub('[',"0, ").sub(']', ", 0\n")
     len = 1
